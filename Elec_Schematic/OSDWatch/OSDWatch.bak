@@ -1,0 +1,147 @@
+EESchema Schematic File Version 4
+LIBS:OSDWatch-cache
+EELAYER 26 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L ESP32DEVKITC:ESP32DEVKITV1 U?
+U 1 1 5C01C7DC
+P 2600 1800
+F 0 "U?" H 3390 1800 50  0000 L CNN
+F 1 "ESP32DEVKITV1" H 1700 2000 50  0001 L BNN
+F 2 "ESP32-DEVKIT V1" H 1700 1900 50  0001 L BNN
+F 3 "Module: development kit V1" H 1550 1650 50  0001 L BNN
+F 4 "Espressif Systems" H 2450 2000 50  0001 L BNN "Field4"
+F 5 "None" H 2600 1800 50  0001 L BNN "Field5"
+F 6 "Unavailable" H 2600 1800 50  0001 L BNN "Field6"
+F 7 "None" H 2600 1800 50  0001 L BNN "Field7"
+F 8 "ESP32-DEVKIT V1" H 2500 1900 50  0001 L BNN "Field8"
+	1    2600 1800
+	1    0    0    -1  
+$EndComp
+$Comp
+L ADXL_345:ADXL345_Module U?
+U 1 1 5C01BFD4
+P 4850 2350
+F 0 "U?" H 5277 2196 50  0000 L CNN
+F 1 "ADXL345_Module" H 5277 2105 50  0000 L CNN
+F 2 "" H 4850 2350 50  0001 C CNN
+F 3 "" H 4850 2350 50  0001 C CNN
+	1    4850 2350
+	1    0    0    -1  
+$EndComp
+$Comp
+L MAX30102_Module:MAX30102_Module U?
+U 1 1 5C01C0F0
+P 4900 3650
+F 0 "U?" H 5327 3596 50  0000 L CNN
+F 1 "MAX30102_Module" H 5327 3505 50  0000 L CNN
+F 2 "" H 4900 3650 50  0001 C CNN
+F 3 "" H 4900 3650 50  0001 C CNN
+	1    4900 3650
+	1    0    0    -1  
+$EndComp
+$Comp
+L OLED_Display:OLED_Display U?
+U 1 1 5C01C216
+P 4950 4800
+F 0 "U?" H 5878 4846 50  0000 L CNN
+F 1 "OLED_Display" H 5878 4755 50  0000 L CNN
+F 2 "" H 4950 4800 50  0001 C CNN
+F 3 "" H 4950 4800 50  0001 C CNN
+	1    4950 4800
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2500 2500 2500 2800
+Wire Wire Line
+	2600 2500 2600 2700
+Wire Wire Line
+	2600 2700 3700 2700
+Wire Wire Line
+	3700 2700 3700 2900
+Wire Wire Line
+	3700 2900 4600 2900
+Wire Wire Line
+	2500 2800 4500 2800
+Wire Wire Line
+	4500 2800 4500 3650
+Wire Wire Line
+	4500 3650 4700 3650
+Connection ~ 4500 2800
+Wire Wire Line
+	4500 2800 4650 2800
+Wire Wire Line
+	4500 3650 4500 4950
+Wire Wire Line
+	4500 4950 4700 4950
+Connection ~ 4500 3650
+Wire Wire Line
+	4600 2900 4600 3550
+Wire Wire Line
+	4600 3550 4700 3550
+Connection ~ 4600 2900
+Wire Wire Line
+	4600 2900 4650 2900
+Wire Wire Line
+	4600 3550 4600 4850
+Wire Wire Line
+	4600 4850 4700 4850
+Connection ~ 4600 3550
+Wire Wire Line
+	4500 2300 4500 2400
+Wire Wire Line
+	4500 2400 4650 2400
+Wire Wire Line
+	4500 2300 4650 2300
+Wire Wire Line
+	4700 3450 4400 3450
+Wire Wire Line
+	1700 3450 1700 2500
+Wire Wire Line
+	4700 4050 4250 4050
+Wire Wire Line
+	1800 4050 1800 2500
+Wire Wire Line
+	4700 4750 4250 4750
+Wire Wire Line
+	4250 4750 4250 4050
+Wire Wire Line
+	4250 2200 4650 2200
+Connection ~ 4250 4050
+Wire Wire Line
+	4250 4050 1800 4050
+Wire Wire Line
+	4250 4050 4250 2200
+Connection ~ 4500 2300
+Wire Wire Line
+	4700 4650 4400 4650
+Wire Wire Line
+	4400 4650 4400 3450
+Wire Wire Line
+	4400 2300 4500 2300
+Connection ~ 4400 3450
+Wire Wire Line
+	4400 3450 1700 3450
+Wire Wire Line
+	4400 3450 4400 2300
+Wire Wire Line
+	4650 2500 3700 2500
+Wire Wire Line
+	3700 2500 3700 800 
+Wire Wire Line
+	3700 800  1900 800 
+Wire Wire Line
+	1900 800  1900 1100
+$EndSCHEMATC

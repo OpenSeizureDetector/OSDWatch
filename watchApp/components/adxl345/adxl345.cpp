@@ -37,28 +37,11 @@ I2C_t& i2c = i2c0;
 uint8_t ADXL345_init(int scl, int sda) {
   printf("ADXL345_init(%d,%d)\n",scl,sda);
 #if defined(ESP_PLATFORM)
-  /*
-  int i2c_master_port = 0;
-  i2c_config_t conf;
-  conf.mode = I2C_MODE_MASTER;
-  conf.sda_io_num = sda;
-  conf.sda_pullup_en = GPIO_PULLUP_ENABLE;
-  conf.scl_io_num = scl;
-  conf.scl_pullup_en = GPIO_PULLUP_ENABLE;
-  conf.master.clk_speed = 100000;
-  i2c_param_config(i2c_master_port, &conf);
-  i2c_driver_install(i2c_master_port, conf.mode,
-                              0,
-                              0, 0);
-  i2c_cmd = i2c_cmd_link_create();
-  */
   ESP_ERROR_CHECK( i2c.begin((gpio_num_t)sda,(gpio_num_t)scl,100000));
   i2c.setTimeout(10);
   i2c.scanner();
   ADXL345_devAddr = (i2c_port_t)0;
   ADXL345_devAddr = (i2c_port_t)ADXL345_findDevice();
-
-
 #elif defined (ESP_SDK)
   i2c_init(scl,sda);
   ADXL345_devAddr = 0;
