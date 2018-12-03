@@ -7,10 +7,16 @@
 #include "driver/gpio.h"
 #include "adxl345.h"
 
+
+#include "i2cTask.h"
+
 #include "osd_app.h"
 
-//#define SDA_PIN 18
-//#define SCL_PIN 19
+
+// Create Global Variables
+An_Data anD;        // analysis data
+
+
 
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
@@ -135,31 +141,37 @@ void monitorAdxl345Task(void *pvParameters) {
 
 
 
-extern "C" void app_main(void)
+//extern "C"
+void app_main(void)
 {
-  nvs_flash_init();
+
+  /* First Start the I2C task so that other tasks can access the bus */
+  i2cConfig_t conf;
+  conf.port = I2C_NUM_0;
+  conf.sda = (gpio_num_t)SDA_PIN;
+  conf.scl = (gpio_num_t)SCL_PIN;
+  conf.clkSpeed = 100000;
+  conf.gpio_pullup = true;
+  printf("Starting i2cTask....\n");
+  xTaskCreate(i2cTask,"i2cTask",8000,&conf,2,NULL);
+
+  //nvs_flash_init();
   
-  //uint8_t i;
-  //printf("i2cScanTask - SCL=GPIO%d, SDA=GPIO%d\n",SCL_PIN,SDA_PIN);
-  //ADXL345_init(SCL_PIN,SDA_PIN);
-  //printf("i2c_init() complete\n");
-  //i = ADXL345_findDevice();
-  //printf("ADXL found at address %x\n",i);
+  //setup_adxl345();
   
-  setup_adxl345();
-  
+  printf("Starting Blink Task...\n");
   xTaskCreate(LEDBlinkTask,"Blink",8000,NULL,2,NULL);
-  xTaskCreate(i2cScanTask,"i2cScanTask",8000,NULL,2,NULL);
-  xTaskCreate(monitorAdxl345Task,"monitorAdxl345Task",8000,NULL,2,NULL);
+  //xTaskCreate(i2cScanTask,"i2cScanTask",8000,NULL,2,NULL);
+  //xTaskCreate(monitorAdxl345Task,"monitorAdxl345Task",8000,NULL,2,NULL);
+ 
+  printf("Starting heartTask...\n");
+  xTaskCreate(heartTask,"heartTask",8000,NULL,2,NULL);
+
+
   
-    
-    /*gpio_set_direction(GPIO_NUM_4, GPIO_MODE_OUTPUT);
-    int level = 0;
-    while (true) {
-        gpio_set_level(GPIO_NUM_4, level);
-        level = !level;
-        vTaskDelay(300 / portTICK_PERIOD_MS);
-    }
-    */
+  
+  //runi2cTaskTest((gpio_num_t)SDA_PIN,(gpio_num_t)SCL_PIN);
+
+
 }
 

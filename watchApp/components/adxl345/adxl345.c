@@ -19,7 +19,6 @@
 */
 
 #include <stdio.h>
-//#include "i2c_reg.h"
 #include "adxl345.h"
 
 // Module variables - global within this module.
@@ -27,19 +26,10 @@ i2c_port_t ADXL345_devAddr = (i2c_port_t)0xff;  // 7 bit i2c address range so th
                          //    show  it is not initialised yet.
 ADXL345_Vector f;
 
-#if defined(ESP_PLATFORM)
-I2C_t& i2c = i2c0;
-//i2c_cmd_handle_t i2c_cmd;
-#endif
-
-
 
 uint8_t ADXL345_init(int scl, int sda) {
   printf("ADXL345_init(%d,%d)\n",scl,sda);
 #if defined(ESP_PLATFORM)
-  ESP_ERROR_CHECK( i2c.begin((gpio_num_t)sda,(gpio_num_t)scl,100000));
-  i2c.setTimeout(10);
-  i2c.scanner();
   ADXL345_devAddr = (i2c_port_t)0;
   ADXL345_devAddr = (i2c_port_t)ADXL345_findDevice();
 #elif defined (ESP_SDK)
@@ -76,7 +66,17 @@ uint8_t ADXL345_init(int scl, int sda) {
 uint8_t ADXL345_writeRegister8(uint8_t reg, uint8_t value)
 {
 #if defined(ESP_PLATFORM)
-  if (i2c.writeByte(ADXL345_devAddr, reg, value)) {
+  i2cTransaction_t trans;
+  trans.type = I2C_TX;
+  trans.devAddr=ADXL345_devAddr;
+  trans.reg = reg;
+  trans.nData = 1;
+  trans.data[0]=value;
+  trans.wait = true;
+  i2cRunTransaction(&trans);
+  //printf("i2cRunTransaction Complete retVal=%d, data[0]=%02x\n",
+  //	 trans.retVal,(int)trans.data[0]);
+  if (trans.retVal) {
 #else
   if (i2c_slave_write(ADXL345_devAddr, &reg, &value, 1)) {
 #endif
@@ -94,9 +94,19 @@ uint8_t ADXL345_writeRegister8(uint8_t reg, uint8_t value)
  * @return: the byte read, or -1 on error.
  */
 uint8_t ADXL345_readRegister8(uint8_t reg) {
+  i2cTransaction_t trans;
   uint8_t byte;
 #if defined(ESP_PLATFORM)
-  if (i2c.readByte(ADXL345_devAddr, reg, &byte)) {
+  trans.type = I2C_RX;
+  trans.devAddr=ADXL345_devAddr;
+  trans.reg = reg;
+  trans.nData = 1;
+  trans.wait = true;
+  i2cRunTransaction(&trans);
+  //printf("i2cRunTransaction Complete retVal=%d, data[0]=%02x\n",
+  //	 trans.retVal,(int)trans.data[0]);
+  byte = trans.data[0];
+  if (trans.retVal) {
 #else
   if (i2c_slave_read(ADXL345_devAddr, &reg, &byte, 1)) {
 #endif
@@ -114,9 +124,25 @@ uint8_t ADXL345_readRegister8(uint8_t reg) {
  */
 int16_t ADXL345_readRegister16(uint8_t reg) {
   int16_t value;
-  uint8_t bytes[2];
+  uint8_t data[2];
+  /* Note - this fiddle is something to do with C99 or C11 because
+        saying uint8_t bytes[2]; bytes = &(trans.data[0]) failed with an error
+        assignment to expression with array type
+  */
+  uint8_t *bytes;
+  bytes = &data[0];
 #if defined(ESP_PLATFORM)
-  if (i2c.readBytes(ADXL345_devAddr, reg, 2, &bytes[0])) {
+  i2cTransaction_t trans;
+  trans.type = I2C_RX;
+  trans.devAddr=ADXL345_devAddr;
+  trans.reg = reg;
+  trans.nData = 2;
+  trans.wait = true;
+  i2cRunTransaction(&trans);
+  //printf("i2cRunTransaction Complete retVal=%d, data[0]=%02x\n",
+  //	 trans.retVal,(int)trans.data[0]);
+  bytes = &(trans.data[0]);
+  if (trans.retVal) {
 #else
   if (i2c_slave_read(ADXL345_devAddr, &reg, &bytes[0], 2)) {
 #endif
@@ -129,7 +155,57 @@ int16_t ADXL345_readRegister16(uint8_t reg) {
   }
 }
 
+// Read raw acceleration values
+// read all 12 bytes at once so it is compatible with
+// FIFO (otherwise finishing reading one axis value would pop the FIFO
+ADXL345_IVector ADXL345_readRaw(void)
+{
+  ADXL345_IVector r;
+  uint8_t data[6];
+  /* Note - this fiddle is something to do with C99 or C11 because
+        saying uint8_t bytes[2]; bytes = &(trans.data[0]) failed with an error
+        assignment to expression with array type
+  */
+  uint8_t *bytes;
+  bytes = &data[0];
+  uint8_t reg;
 
+  reg = ADXL345_REG_DATAX0;
+
+  // read all 6 data bytes in one read operation.
+#if defined(ESP_PLATFORM)
+  i2cTransaction_t trans;
+  trans.type = I2C_RX;
+  trans.devAddr=ADXL345_devAddr;
+  trans.reg = reg;
+  trans.nData = 6;
+  trans.wait = true;
+  i2cRunTransaction(&trans);
+  //printf("i2cRunTransaction Complete retVal=%d, data[0]=%02x\n",
+  //	 trans.retVal,(int)trans.data[0]);
+  bytes = trans.data;
+  if (trans.retVal) {
+#else
+  if (i2c_slave_read(ADXL345_devAddr, &reg, &bytes[0], 6)) {
+#endif
+    // non-zero response = error
+    printf("ADXL345_readRaw - Error\n");
+    r.XAxis = 0;
+    r.YAxis = 0;
+    r.ZAxis = 0;
+  } else {
+    r.XAxis = (int16_t)(4*(bytes[1]<<8 | bytes[0]));
+    r.YAxis = (int16_t)(4*(bytes[3]<<8 | bytes[2]));
+    r.ZAxis = (int16_t)(4*(bytes[5]<<8 | bytes[4]));
+  }
+  return r;
+}
+
+  /****************************************************
+   * END OF PLATFORM SPECIFIC CODE                    *
+   ****************************************************/
+
+  
 void ADXL345_writeRegisterBit(uint8_t reg, uint8_t pos, bool state)
 {
     uint8_t value;
@@ -233,35 +309,6 @@ ADXL345_Vector ADXL345_lowPassFilter(ADXL345_Vector vector, float alpha)
     return f;
 }
 
-// Read raw acceleration values
-// read all 12 bytes at once so it is compatible with
-// FIFO (otherwise finishing reading one axis value would pop the FIFO
-ADXL345_IVector ADXL345_readRaw(void)
-{
-  ADXL345_IVector r;
-  uint8_t bytes[6];
-  uint8_t reg;
-
-  reg = ADXL345_REG_DATAX0;
-
-  // read all 6 data bytes in one read operation.
-#if defined(ESP_PLATFORM)
-  if (i2c.readBytes(ADXL345_devAddr, reg, 6, &bytes[0])) {
-#else
-  if (i2c_slave_read(ADXL345_devAddr, &reg, &bytes[0], 6)) {
-#endif
-    // non-zero response = error
-    printf("ADXL345_readRaw - Error\n");
-    r.XAxis = 0;
-    r.YAxis = 0;
-    r.ZAxis = 0;
-  } else {
-    r.XAxis = (int16_t)(4*(bytes[1]<<8 | bytes[0]));
-    r.YAxis = (int16_t)(4*(bytes[3]<<8 | bytes[2]));
-    r.ZAxis = (int16_t)(4*(bytes[5]<<8 | bytes[4]));
-  }
-  return r;
-}
 
 // Read normalized values
 ADXL345_Vector ADXL345_readNormalize(float gravityFactor)

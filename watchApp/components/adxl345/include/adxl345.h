@@ -19,26 +19,17 @@
  *
  */
 
-#ifdef ESP_PLATFORM
-//#warning "Compiling for ESP_PLATFORM"
-//#include "driver/i2c.h"
-
-#else
-#include "espressif/esp_common.h"
-#endif
 
 #if defined( ESP8266_RTOS )
+#include "espressif/esp_common.h"
 #include <i2c_master.h>
 #elif defined (ESP_PLATFORM)
 //#warning "Compiling for ESP_PLATFORM"
 #include "esp_log.h"
-#include "I2Cbus.hpp"
+#include "i2cTask.h"
 #else
 #include "../i2c/i2c.h"
 #endif
-
-
-
 
 
 #ifndef ADXL345_h
