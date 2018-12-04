@@ -6,7 +6,7 @@
 #include "nvs_flash.h"
 #include "driver/gpio.h"
 #include "adxl345.h"
-
+#include "ssd1366.h"
 
 #include "i2cTask.h"
 
@@ -168,7 +168,23 @@ void app_main(void)
   xTaskCreate(heartTask,"heartTask",8000,NULL,2,NULL);
 
 
-  
+  SSD1306_init();
+  char bmp[1024];
+  for(int c=0; c!=1024;c++)
+    bmp[c] = 0b01000100;
+  SSD1306_displayBitmap(bmp);
+  SSD1306_clearDisplay();
+  SSD1306_displayBitmap(bmp);
+  SSD1306_clearDisplay();
+  SSD1306_displayBitmap(bmp);
+  SSD1306_clearDisplay();
+  SSD1306_displayBitmap(bmp);
+  SSD1306_clearDisplay();
+  SSD1306_displayBitmap(bmp);
+  SSD1306_clearDisplay();
+  SSD1306_displayBitmap(bmp);
+  SSD1306_clearDisplay();
+  SSD1306_displayText("_Open\n____Seizure\n______Detector");
   
   //runi2cTaskTest((gpio_num_t)SDA_PIN,(gpio_num_t)SCL_PIN);
 
