@@ -119,7 +119,6 @@ void SSD1306_displayText(char *text) {
       trans.wait = true;
       for (uint8_t b=0;b<8;b++)
 	trans.data[b] = font8x8_basic_tr[(uint8_t)text[i]][b];
-      trans.data[2] = 0xB0 | cur_page;
       i2cRunTransaction(&trans);
       if (trans.retVal) {
 	printf("ssd1306: ERROR - Error in SSD1306_display_text - 2\n");
@@ -131,8 +130,8 @@ void SSD1306_displayText(char *text) {
 }
 
 /**
- * SSD1306_init()
- * Initialise the display and switch it on.
+ * SSD1306_setContrast()
+ * Set the display contrast to 'contrast' (0-255).
  */
 void SSD1306_setContrast(uint8_t contrast) {
   i2cTransaction_t trans;

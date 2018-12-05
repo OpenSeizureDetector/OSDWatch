@@ -171,7 +171,7 @@ void app_main(void)
   SSD1306_init();
   char bmp[1024];
   for(int c=0; c!=1024;c++)
-    bmp[c] = 0b01000100;
+    bmp[c] = 0b00000001;
   SSD1306_displayBitmap(bmp);
   SSD1306_clearDisplay();
   SSD1306_displayBitmap(bmp);
@@ -184,7 +184,7 @@ void app_main(void)
   SSD1306_clearDisplay();
   SSD1306_displayBitmap(bmp);
   SSD1306_clearDisplay();
-  SSD1306_displayText("_Open\n____Seizure\n______Detector");
+  SSD1306_displayText(" Open     \n    Seizure    \n      Detector");
   
   //runi2cTaskTest((gpio_num_t)SDA_PIN,(gpio_num_t)SCL_PIN);
 
