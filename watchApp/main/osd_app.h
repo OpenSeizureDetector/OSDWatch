@@ -25,7 +25,7 @@
  * along with OSDWatch.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "adxl345.h"
+//#include "adxl345.h"
 
 // Macro to simulate the Pebble APP_LOG function
 #define DEBUG true
@@ -221,8 +221,8 @@ typedef struct {
   int roiRatios[4]; // array storing the four ROI ratios.
   int freqRes;      // Actually 1000 x frequency resolution
   int simpleSpec[10];  // Simplified spectrum - 1 to 10 Hz bins.
-  ADXL345_IVector latestAccelData;  // Latest accelerometer readings received.
-  int32_t accData[NSAMP_MAX];   
+  //ADXL345_IVector latestAccelData;  // Latest accelerometer readings received.
+  //int32_t accData[NSAMP_MAX];   
   short fftResults[NSAMP_MAX/2];  // FFT results
   int accDataPos;   // Position in accData of last point in time series.
   int accDataFull;  // Flag so we know when we have a complete buffer full
@@ -245,8 +245,6 @@ typedef struct {
 } An_Data;  // analysis Data
 
 
-
-
 /* GLOBAL VARIABLES */
 // Settings (obtained from default constants or persistent storage)
 extern int debug;            // enable or disable logging output
@@ -264,13 +262,6 @@ void comms_init();
 void commsTask(void *pvParameters);
 
 
-// from analysis.c
-void analysis_init();
-int alarm_check();
-void accel_handler(ADXL345_IVector *data, uint32_t num_samples);
-void do_analysis();
-void check_fall();
-int getAmpl(int nBin);
 
 // from http_server.c
 void httpd_task(void *pvParameters);

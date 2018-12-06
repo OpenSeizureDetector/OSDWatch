@@ -27,6 +27,10 @@
 
 #include "osd_app.h"
 #include "adxl345.h"
+#include "accelTask.h"
+#include "driver/gpio.h"
+
+xQueueHandle *accelDataQueue;
 
 /**
  * Initialise the ADXL345 accelerometer trip to use a FIFO buffer
@@ -34,6 +38,7 @@
  */
 void setup_adxl345() {
   uint8_t devAddr;
+  int retVal;
   
   printf("setup_adxl345()\n");
   
@@ -51,9 +56,9 @@ void setup_adxl345() {
   printf("Setting 4G range\n");
   ADXL345_setRange(ADXL345_RANGE_4G);
   
-  printf("Setting to 100Hz data rate\n");
-  ADXL345_setDataRate(ADXL345_DATARATE_100HZ);
-  //ADXL345_setDataRate(ADXL345_DATARATE_12_5HZ);
+  printf("Setting to 12.5Hz data rate\n");
+  //ADXL345_setDataRate(ADXL345_DATARATE_100HZ);
+  ADXL345_setDataRate(ADXL345_DATARATE_12_5HZ);
   
   /*printf("Setting Data Format - interupts active low.\n");
     if (ADXL345_writeRegister8(ADXL345_REG_DATA_FORMAT,0x2B)!=0) {
@@ -64,19 +69,21 @@ void setup_adxl345() {
     }
   */
   // Set to 4g range, 4mg/LSB resolution, interrupts active high.
-  ADXL345_writeRegister8(ADXL345_REG_DATA_FORMAT,0b00001001);
+  //ADXL345_writeRegister8(ADXL345_REG_DATA_FORMAT,0b00001001);
   
   printf("Starting Measurement\n");
-  if (ADXL345_writeRegister8(ADXL345_REG_POWER_CTL,0x08)!=0) {
-    printf("*** Error setting measurement Mode ***\n");
+  retVal = ADXL345_writeRegister8(ADXL345_REG_POWER_CTL,0x08);
+  if (retVal!=0) {
+    printf("*** Error setting measurement Mode - retval = 0x%02x***\n",retVal);
   } else {
     printf("Measurement Mode set to 0x%02x\n",ADXL345_readRegister8(ADXL345_REG_POWER_CTL));
   }
   
   
   printf("Enabling Data Ready Interrupt\n");
-  if (ADXL345_writeRegister8(ADXL345_REG_INT_ENABLE,0x80)!=0) {
-    printf("*** Error enabling interrupt ***\n");
+  retVal = ADXL345_writeRegister8(ADXL345_REG_INT_ENABLE,0x80);
+  if (retVal) {
+    printf("*** Error enabling interrupt - retVal =0x%02x***\n",retVal);
   } else {
     printf("Interrupt Enabled - set to 0x%02x\n",
 	   ADXL345_readRegister8(ADXL345_REG_INT_ENABLE));
@@ -92,6 +99,9 @@ void setup_adxl345() {
   printf("INT_ENABLE= 0x%02x\n",ADXL345_readRegister8(ADXL345_REG_INT_ENABLE));
   printf("INT_MAP=    0x%02x\n",ADXL345_readRegister8(ADXL345_REG_INT_MAP));
   printf("POWER_CTL=  0x%02x\n",ADXL345_readRegister8(ADXL345_REG_POWER_CTL));
+  printf("INT_SOURCE= 0x%02x\n",ADXL345_readRegister8(ADXL345_REG_INT_SOURCE));
+  printf("FIFO_STATUS= %d\n",ADXL345_readRegister8(ADXL345_REG_FIFO_STATUS));
+  printf("Interrupt Pin GPIO%d value = %d\n",INTR_PIN,GPIO_INPUT_GET(INTR_PIN));
   printf("************************************\n");
   
 }
@@ -122,32 +132,19 @@ void monitorAdxl345Task(void *pvParameters) {
 
 // Interrupt handler - looks at the accerometer data ready
 // signal on pin INTR_PIN, and the configuration switch on BUTTON_IO_PIN
-void gpio_intr_handler(uint8_t gpio_num)
+static void IRAM_ATTR gpio_intr_handler(void* arg)
 {
-  /*  uint32_t status = GPIO_REG_READ(GPIO_STATUS_ADDRESS);
-  static uint8 val = 0;
-
-  if (status & INTR_PIN) {
+  uint32_t gpio_num = (uint32_t) arg;
+  if (gpio_num ==  INTR_PIN) {
     //printf("ISR - GPIO_%d\n",gpio_num);
-    uint32_t now = xTaskGetTickCountFromISR();
-    xQueueSendToBackFromISR(tsqueue, &now, NULL);
+    //uint32_t now = xTaskGetTickCountFromISR();
+    xQueueSendFromISR(accelDataQueue, &gpio_num, NULL);
   }
-
-  if (status & BUTTON_IO_PIN) {
-    if (val == 0) {
-      GPIO_OUTPUT_SET(LED_IO_NUM, 1);
-      val = 1;
-    } else {
-      GPIO_OUTPUT_SET(LED_IO_NUM, 0);
-      val = 0;
-    }
-  }
-
 
   //CLEAR THE STATUS IN THE W1 INTERRUPT REGISTER
-  GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, status);       
-  */
-  #warning "FIXME - gpio_intr_handler needs converting to ESP32"
+  //GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, status);       
+  
+  //#warning "FIXME - gpio_intr_handler needs converting to ESP32"
 }
 
 
@@ -168,21 +165,21 @@ void accel_handler(ADXL345_IVector *data, uint32_t num_samples) {
     for (i=0;i<(int)num_samples;i++) {
       // Wrap around the buffer if necessary
       if (anD.accDataPos>=anD.nSamp) { 
-	anD.accDataPos = 0;
-	anD.accDataFull = 1;
+	//anD.accDataPos = 0;
+	//anD.accDataFull = 1;
 	// a separate task looks for anD.accDataFull being true, and does
 	// the analysis if this is the case.
 	//do_analysis();
 	break;
       }
       // add good data to the accData array
-      anD.accData[anD.accDataPos] =
-	abs(data[i].XAxis)
-	+ abs(data[i].YAxis)
-	+ abs(data[i].ZAxis);
-	anD.accDataPos++;
+      //anD.accData[anD.accDataPos] =
+      //abs(data[i].XAxis)
+      //+ abs(data[i].YAxis)
+      //+ abs(data[i].ZAxis);
+      //anD.accDataPos++;
     }
-    anD.latestAccelData = data[num_samples-1];
+    //anD.latestAccelData = data[num_samples-1];
   }
 }
 
@@ -193,24 +190,31 @@ void accel_handler(ADXL345_IVector *data, uint32_t num_samples) {
  *  interrupt handler to say data is ready.
  *  Otherwise polls periodically to read data from the adxl345 FIFO
  */
-void receiveAccelDataTask(void *pvParameters)
+void accelTask(void *pvParameters)
 {
   ADXL345_IVector r;
   ADXL345_IVector buf[ACC_BUF_LEN];
   
   printf("receiveAccelDataTask - SCL=GPIO%d, SDA=GPIO%d\n",SCL_PIN,SDA_PIN);
 
+  // Create the transaction queue - a queue of pointers
+  accelDataQueue = xQueueCreate(QUEUE_SIZE,sizeof(char *));
+  
   if (USE_INTR) {
-    /*printf("SETUP INTERRUPT..\r\n");
-    GPIO_ConfigTypeDef io_in_conf;
-    io_in_conf.GPIO_IntrType = GPIO_PIN_INTR_POSEDGE;
-    io_in_conf.GPIO_Mode = GPIO_Mode_Input;
-    io_in_conf.GPIO_Pin = INTR_PIN;
-    io_in_conf.GPIO_Pullup = GPIO_PullUp_EN;
+    printf("SETUP INTERRUPT..\r\n");
+    gpio_config_t io_in_conf;
+    io_in_conf.intr_type = GPIO_PIN_INTR_POSEDGE;
+    io_in_conf.mode = GPIO_MODE_INPUT;
+    io_in_conf.pin_bit_mask = INTR_PIN;
+    io_in_conf.pull_up_en = 1;
     gpio_config(&io_in_conf);
-    gpio_intr_handler_register(gpio_intr_handler, NULL);
+
+    gpio_set_intr_type(INTR_PIN, GPIO_INTR_POSEDGE);
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(INTR_PIN, gpio_intr_handler, (void*) INTR_PIN);
+
     printf("Waiting for accelerometer data ready interrupt on gpio %d...\r\n", INTR_PIN);
-    */
+    
     #warning "FIXME - update receiveAccelDataTask to use ESP32 interrupts"
   } else {
     printf("NOT using interrupts - will poll adxl345 periodically\n");
@@ -219,15 +223,11 @@ void receiveAccelDataTask(void *pvParameters)
   // Now initialise the adxl345 (which also initialises the i2c bus
   setup_adxl345();
   ADXL345_enableFifo();
-  xQueueHandle *tsqueue = (xQueueHandle *)pvParameters;
-  
-  // Start the routine monitoring task
-  //xTaskCreate(monitorAdxl345Task,"monitorAdxl345",256,NULL,2,NULL);
   
   while(1) {
     uint32_t data_ts;
     if (USE_INTR) {
-      xQueueReceive(*tsqueue, &data_ts, portMAX_DELAY);
+      xQueueReceive(accelDataQueue, &data_ts, portMAX_DELAY);
       printf("Accelerometer data ready....\n");
       data_ts *= portTICK_RATE_MS;
     } else {

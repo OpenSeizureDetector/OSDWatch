@@ -65,7 +65,6 @@ uint8_t ADXL345_init(int scl, int sda) {
 // Write byte to register
 uint8_t ADXL345_writeRegister8(uint8_t reg, uint8_t value)
 {
-#if defined(ESP_PLATFORM)
   i2cTransaction_t trans;
   trans.type = I2C_TX;
   trans.devAddr=ADXL345_devAddr;
@@ -77,14 +76,11 @@ uint8_t ADXL345_writeRegister8(uint8_t reg, uint8_t value)
   //printf("i2cRunTransaction Complete retVal=%d, data[0]=%02x\n",
   //	 trans.retVal,(int)trans.data[0]);
   if (trans.retVal) {
-#else
-  if (i2c_slave_write(ADXL345_devAddr, &reg, &value, 1)) {
-#endif
     // non-zero response = error
     printf("ADXL345_writeRegister8(0x%x, 0x%x) - Error\n",ADXL345_devAddr,reg);
-    return -1;
+    return trans.retVal;
   } else {
-    return value;
+    return 0;
   }
 
 }
