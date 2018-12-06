@@ -7,6 +7,9 @@
 /* Global Variables */
 long MAX30100_IR = 0;      // Last IR reflectance datapoint
 long MAX30100_RED = 0;     // Last Red reflectance datapoint
+uint8_t MAX30100_temp_intg;
+uint8_t MAX30100_temp_frac;
+uint8_t MAX30100_die_temp;
 
 
 /* 'Private' Functions */
@@ -44,6 +47,13 @@ void MAX30100_readSensor(void){
   //temp[0] = 0x11; temp[1] = 0x22; temp[2] = 0x33; temp[4] = 0x44; temp[5] = 0x55;temp[6] = 0x66;
   MAX30100_IR =  (long)((long)((long)temp[0]&0x03)<<16) | (long)temp[1]<<8 | (long)temp[2];    // Combine values to get the actual number
   MAX30100_RED = (long)((long)((long)temp[3] & 0x03)<<16) |(long)temp[4]<<8 | (long)temp[5];   // Combine values to get the actual number
+
+  MAX30100_temp_intg = MAX30100_I2CreadByte(MAX30100_ADDRESS,
+					    MAX30100_TEMP_INTG);
+  MAX30100_temp_frac = MAX30100_I2CreadByte(MAX30100_ADDRESS,
+					    MAX30100_TEMP_FRAC);
+  MAX30100_die_temp = MAX30100_I2CreadByte(MAX30100_ADDRESS,
+					   MAX30100_DIE_TEMP);
 }
 
 void MAX30100_shutdown(void){

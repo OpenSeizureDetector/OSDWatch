@@ -28,6 +28,7 @@
 #include "osd_app.h"
 #include "adxl345.h"
 #include "accelTask.h"
+#include "displayTask.h"
 #include "driver/gpio.h"
 
 xQueueHandle *accelDataQueue;
@@ -136,8 +137,6 @@ static void IRAM_ATTR gpio_intr_handler(void* arg)
 {
   uint32_t gpio_num = (uint32_t) arg;
   if (gpio_num ==  INTR_PIN) {
-    //printf("ISR - GPIO_%d\n",gpio_num);
-    //uint32_t now = xTaskGetTickCountFromISR();
     xQueueSendFromISR(accelDataQueue, &gpio_num, NULL);
   }
 
@@ -194,6 +193,7 @@ void accelTask(void *pvParameters)
 {
   ADXL345_IVector r;
   ADXL345_IVector buf[ACC_BUF_LEN];
+    char rowStr[32];
   
   printf("receiveAccelDataTask - SCL=GPIO%d, SDA=GPIO%d\n",SCL_PIN,SDA_PIN);
 
@@ -213,9 +213,7 @@ void accelTask(void *pvParameters)
     gpio_install_isr_service(0);
     gpio_isr_handler_add(INTR_PIN, gpio_intr_handler, (void*) INTR_PIN);
 
-    printf("Waiting for accelerometer data ready interrupt on gpio %d...\r\n", INTR_PIN);
-    
-    #warning "FIXME - update receiveAccelDataTask to use ESP32 interrupts"
+    printf("Waiting for accelerometer data ready interrupt on gpio %d...\r\n", INTR_PIN);    
   } else {
     printf("NOT using interrupts - will poll adxl345 periodically\n");
   }
@@ -228,8 +226,7 @@ void accelTask(void *pvParameters)
     uint32_t data_ts;
     if (USE_INTR) {
       xQueueReceive(accelDataQueue, &data_ts, portMAX_DELAY);
-      printf("Accelerometer data ready....\n");
-      data_ts *= portTICK_RATE_MS;
+      printf("Accelerometer data ready - GPIO_%d....\n",data_ts);
     } else {
       // Wait for 310 ms - 100Hz sample rate, fifo is 32 readings
       // so we wait for 31 readings = 310 ms.
@@ -259,15 +256,19 @@ void accelTask(void *pvParameters)
       if ((ADXL345_readRegister8(ADXL345_REG_FIFO_STATUS)==0)
 	  || (i==ACC_BUF_LEN)) finished = 1;
     }
-    //printf("receiveAccelDataTask: read %d points from fifo, %dms r.x=%7d, r.y=%7d, r.z=%7d\n",
-    //	   i,
-    //	   data_ts,r.XAxis,r.YAxis,r.ZAxis);
-    /*for (int n=0;n<i;n++) {
-      printf("n=%d r.x=%7d, r.y=%7d, r.z=%7d\n",
-      n,
-      buf[n].XAxis,buf[n].YAxis,buf[n].ZAxis);
-      }
-    */
+    printf("accelTask: read %d points from fifo, %dms r.x=%7d, r.y=%7d, r.z=%7d\n",
+    	   i,
+    	   data_ts,r.XAxis,r.YAxis,r.ZAxis);
+    sprintf(rowStr," x=%7d mg",r.XAxis);
+    printf("%s\n",rowStr);
+    displayTask_setRow(1,rowStr);
+    sprintf(rowStr," y=%7d mg",r.YAxis);
+    printf("%s\n",rowStr);
+    displayTask_setRow(2,rowStr);
+    sprintf(rowStr," z=%7d mg",r.ZAxis);
+    printf("%s\n",rowStr);
+    displayTask_setRow(3,rowStr);
+    displayTask_updateDisplay();
 
     // Call the acceleration handler in analysis.c
     accel_handler(buf,i);

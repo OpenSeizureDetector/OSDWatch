@@ -75,6 +75,9 @@ typedef enum{
 
 extern long MAX30100_IR;      // Last IR reflectance datapoint
 extern long MAX30100_RED;     // Last Red reflectance datapoint
+extern uint8_t MAX30100_temp_intg;
+extern uint8_t MAX30100_temp_frac;
+extern uint8_t MAX30100_die_temp;
 
 void  MAX30100_setLEDs(MAX30100_pulseWidth_t pw, MAX30100_ledCurrent_t red, MAX30100_ledCurrent_t ir);  // Sets the LED state
 void  MAX30100_setSPO2(MAX30100_sampleRate_t sr); // Setup the SPO2 sensor, disabled by default

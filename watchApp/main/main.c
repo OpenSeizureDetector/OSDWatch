@@ -15,9 +15,6 @@
 #include "displayTask.h"
 #include "accelTask.h"
 
-/* SHOULD NOT BE NEEDED!! */
-#include "ssd1306.h"
-
 // Create Global Variables
 An_Data anD;        // analysis data
 int debug = 0;            // enable or disable logging output
@@ -56,24 +53,19 @@ void i2cScanTask(void *pvParameters) {
 
 
 
-//extern "C"
 void app_main(void)
 {
 
   /* First Start the I2C task so that other tasks can access the bus */
+  printf("Starting i2cTask....\n");
   i2cConfig_t conf;
   conf.port = I2C_NUM_0;
   conf.sda = (gpio_num_t)SDA_PIN;
   conf.scl = (gpio_num_t)SCL_PIN;
   conf.clkSpeed = 100000;
   conf.gpio_pullup = true;
-  printf("Starting i2cTask....\n");
   xTaskCreate(i2cTask,"i2cTask",8000,&conf,2,NULL);
 
-  //nvs_flash_init();
-  
-  //setup_adxl345();
-  
   printf("Starting Blink Task...\n");
   xTaskCreate(LEDBlinkTask,"Blink",8000,NULL,2,NULL);
   //xTaskCreate(i2cScanTask,"i2cScanTask",8000,NULL,2,NULL);
@@ -82,11 +74,12 @@ void app_main(void)
   xTaskCreate(accelTask,"accelTask",8000,NULL,2,NULL);
   xTaskCreate(monitorAdxl345Task,"monitorAdxl345Task",8000,NULL,2,NULL);
  
-  //printf("Starting heartTask...\n");
-  //xTaskCreate(heartTask,"heartTask",8000,NULL,2,NULL);
 
-  //printf("Starting displayTask\n");
-  //xTaskCreate(displayTask,"displayTask",8000,NULL,2,NULL);
+  printf("Starting displayTask\n");
+  xTaskCreate(displayTask,"displayTask",8000,NULL,2,NULL);
+
+  printf("Starting heartTask...\n");
+  xTaskCreate(heartTask,"heartTask",8000,NULL,2,NULL);
 
   //runi2cTaskTest((gpio_num_t)SDA_PIN,(gpio_num_t)SCL_PIN);
 

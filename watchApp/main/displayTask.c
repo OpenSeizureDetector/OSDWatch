@@ -33,26 +33,31 @@ char displayText[NROW][NCOL];   // 8 rows of 16 characters
 
 void displayTask_updateDisplay() {
   char txtStr[256];
+  txtStr[0]=0;
   for (int irow=0;irow<NROW;irow++) {
-    //printf("displayTask_upateDisplay: row(%d)=%s\n",irow,&displayText[irow][0]);
-    strcpy(&txtStr[irow*(NCOL)],&displayText[irow][0]);
-    txtStr[strlen(txtStr)+1] = 0;   
+    strncat(txtStr,&displayText[irow][0],NCOL);
+    txtStr[strlen(txtStr)+1] = '\0';   
     txtStr[strlen(txtStr)] = '\n';   // overwrite the null termination
   }
-  //printf("displayTask_upateDisplay: %s\n", txtStr);
-  //for (int irow=0;irow<NROW;irow++)
+  printf("displayTask_upateDisplay: len(txtStr)=%d, txtStr=\n%s\n",
+	 strlen(txtStr),txtStr);
+  //for (int irow=0;irow<NROW;irow++) {
   //  printf("displayText(%d)=%s\n", irow,&displayText[irow][0]);
+  //  for (int icol=0;icol<NCOL;icol++)
+  //    printf("%02x:%1c ",displayText[irow][icol],displayText[irow][icol]);
+  //  printf("\n");
+  //}
 
   //printf("txtStr=");
   //for (int i=0;i<256;i++)
-  //  printf("%c",txtStr[i]);
+  //  printf("%02x:%c ",txtStr[i],txtStr[i]);
   //printf("\n");
-  SSD1306_clearDisplay();
+  //SSD1306_clearDisplay();
   SSD1306_displayText(txtStr);
 }
 
 void displayTask_setRow(int nrow, char *txt) {
-  strcpy(&displayText[nrow][0],txt);
+  strncpy(&displayText[nrow][0],txt,NCOL);
 }
 
 
@@ -78,18 +83,20 @@ void displayTask(void *pvParameters) {
   SSD1306_displayText(" Open     \n    Seizure    \n      Detector");
   vTaskDelay(500 / portTICK_PERIOD_MS);
   SSD1306_clearDisplay();
-  SSD1306_displayText("_____ OSD _____");
-
-
-  displayTask_setRow(0,"123456789abcdefg");
-  displayTask_setRow(1,"123456789abcdefg");
-  displayTask_setRow(2,"123456789abcdefg");
-  displayTask_setRow(3,"123456789abcdefg");
-  displayTask_setRow(4,"123456789abcdefg");
-  displayTask_setRow(5,"123456789abcdefg");
-  displayTask_setRow(6,"123456789abcdefg");
-  displayTask_setRow(7,"123456789abcdefg");
+  displayTask_setRow(0,"_____ OSD _____");
   displayTask_updateDisplay();
+  //SSD1306_displayText("_____ OSD _____");
+
+
+  //displayTask_setRow(0,"123456789abcdefg");
+  //displayTask_setRow(1,"123456789abcdefg");
+  //displayTask_setRow(2,"123456789abcdefg");
+  //displayTask_setRow(3,"123456789abcdefg");
+  //displayTask_setRow(4,"123456789abcdefg");
+  //displayTask_setRow(5,"123456789abcdefg");
+  //displayTask_setRow(6,"123456789abcdefg");
+  //displayTask_setRow(7,"123456789abcdefg");
+  //displayTask_updateDisplay();
 
   
 

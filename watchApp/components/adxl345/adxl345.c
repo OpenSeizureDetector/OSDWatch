@@ -169,7 +169,6 @@ ADXL345_IVector ADXL345_readRaw(void)
   reg = ADXL345_REG_DATAX0;
 
   // read all 6 data bytes in one read operation.
-#if defined(ESP_PLATFORM)
   i2cTransaction_t trans;
   trans.type = I2C_RX;
   trans.devAddr=ADXL345_devAddr;
@@ -181,9 +180,6 @@ ADXL345_IVector ADXL345_readRaw(void)
   //	 trans.retVal,(int)trans.data[0]);
   bytes = trans.data;
   if (trans.retVal) {
-#else
-  if (i2c_slave_read(ADXL345_devAddr, &reg, &bytes[0], 6)) {
-#endif
     // non-zero response = error
     printf("ADXL345_readRaw - Error\n");
     r.XAxis = 0;
@@ -732,6 +728,7 @@ void ADXL345_enableFifo(void) {
   ADXL345_writeRegisterBit(ADXL345_REG_POWER_CTL,3,true);
 
   printf("************************************\n");
+  printf("ADXL_enableFifo()\n");
   printf("INT_SOURCE= 0x%02x\n",ADXL345_readRegister8(ADXL345_REG_INT_SOURCE));
   printf("INT_ENABLE= 0x%02x\n",ADXL345_readRegister8(ADXL345_REG_INT_ENABLE));
   printf("INT_MAP=    0x%02x\n",ADXL345_readRegister8(ADXL345_REG_INT_MAP));
