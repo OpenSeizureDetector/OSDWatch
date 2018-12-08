@@ -115,7 +115,12 @@ void setup_adxl345() {
  */
 void monitorAdxl345Task(void *pvParameters) {
   //ADXL345_IVector r;
+  TaskHandle_t *xTaskToNotify = pvParameters;
   
+  // Notify  the sending task that we are ready
+  printf("monitorAdxl345Task - Notifying parent task that we are ready\n");
+  xTaskNotifyGive(*xTaskToNotify);
+
   while(1) {
     printf("*****************************************\n");
     printf("*        Periodic Monitoring            *\n");
@@ -191,6 +196,7 @@ void accel_handler(ADXL345_IVector *data, uint32_t num_samples) {
  */
 void accelTask(void *pvParameters)
 {
+  TaskHandle_t *xTaskToNotify = pvParameters;
   ADXL345_IVector r;
   ADXL345_IVector buf[ACC_BUF_LEN];
     char rowStr[32];
@@ -221,6 +227,10 @@ void accelTask(void *pvParameters)
   // Now initialise the adxl345 (which also initialises the i2c bus
   setup_adxl345();
   ADXL345_enableFifo();
+
+  // Notify  the sending task that we are ready
+  printf("accelTask - Notifying parent task that we are ready\n");
+  xTaskNotifyGive(*xTaskToNotify);
   
   while(1) {
     uint32_t data_ts;

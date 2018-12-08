@@ -23,6 +23,7 @@
 */
 
 #include <stdio.h>
+#include "freertos/FreeRTOS.h"
 #include "i2cTask.h"
 
 
@@ -142,6 +143,11 @@ void i2cTask(void *arg) {
   
   // Create the transaction queue - a queue of pointers
   i2cQueue = xQueueCreate(QUEUE_SIZE,sizeof(char *));
+
+  // Notify  the sending task that we are ready to receive i2c requests
+  printf("i2cTask - Notifying parent task that we are ready\n");
+  xTaskNotifyGive(param->xTaskToNotify);
+  
 
   // Loop continuously, waiting for transaction requests
   printf("i2cTask - queue created - waiting for transactions on queue\n");

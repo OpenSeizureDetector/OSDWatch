@@ -51,6 +51,7 @@ typedef struct {
   gpio_num_t scl;   // GPIO pin number of SCL line
   uint32_t clkSpeed; // Clock Speed (eg. 100000)
   bool gpio_pullup;  // true to enable internal pullup resistors.
+  TaskHandle_t xTaskToNotify;   // We send a notification to this task when i2c is ready to use.
 } i2cConfig_t;
 
 typedef struct {

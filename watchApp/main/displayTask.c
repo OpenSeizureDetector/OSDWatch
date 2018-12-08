@@ -39,8 +39,8 @@ void displayTask_updateDisplay() {
     txtStr[strlen(txtStr)+1] = '\0';   
     txtStr[strlen(txtStr)] = '\n';   // overwrite the null termination
   }
-  printf("displayTask_upateDisplay: len(txtStr)=%d, txtStr=\n%s\n",
-	 strlen(txtStr),txtStr);
+  //printf("displayTask_upateDisplay: len(txtStr)=%d, txtStr=\n%s\n",
+  // strlen(txtStr),txtStr);
   //for (int irow=0;irow<NROW;irow++) {
   //  printf("displayText(%d)=%s\n", irow,&displayText[irow][0]);
   //  for (int icol=0;icol<NCOL;icol++)
@@ -63,6 +63,8 @@ void displayTask_setRow(int nrow, char *txt) {
 
 void displayTask(void *pvParameters) {
   msg_t *msg;
+  TaskHandle_t *xTaskToNotify = pvParameters;
+
   printf("displayTask()");
   SSD1306_init();
   char bmp[1024];
@@ -98,17 +100,14 @@ void displayTask(void *pvParameters) {
   //displayTask_setRow(7,"123456789abcdefg");
   //displayTask_updateDisplay();
 
-  
-
-
-
-
-
-
-
   displayMode = DISPLAY_MODE_ACC;
   // Create the transaction queue - a queue of pointers
   displayQueue = xQueueCreate(QUEUE_SIZE,sizeof(char *));
+
+  // Notify  the sending task that we are ready to receive i2c requests
+  printf("displayTask - Notifying parent task that we are ready\n");
+  xTaskNotifyGive(*xTaskToNotify);
+
 
   // Loop continuously, waiting for transaction requests
   printf("displayTask - queue created - waiting for transactions on queue\n");

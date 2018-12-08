@@ -4,12 +4,18 @@
 
 #include "displayTask.h"
 
-void heartTask(void *pvParam) {
+void heartTask(void *pvParameters) {
+  TaskHandle_t *xTaskToNotify = pvParameters;
   char rowStr[32];
   printf("heartTask");
   MAX30100_startup();
   MAX30100_begin(pw400,i40,sr50);
-  printf("heartTask() - MAX30100_startup() complete");
+  printf("heartTask() - MAX30100_startup() complete\n");
+
+  // Notify  the sending task that we are ready
+  printf("heartTask - Notifying parent task that we are ready\n");
+  xTaskNotifyGive(*xTaskToNotify);
+
   while (true) {
     MAX30100_readSensor();
     //printf("%ld, %ld\n", MAX30100_IR, MAX30100_RED);
